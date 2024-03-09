@@ -245,37 +245,6 @@ func CreateSchedule(groupname string, day, month int, EvenWeekSchedule [][]strin
 	return nil
 }
 
-// Получить расписание на сегодня
-func GetThisOrNexntDay(isToday bool, chatId *int64) (error, []string, string) {
-	//Получае расписание, если пользователь есть в БД
-	err, schedules := GetSchedule(chatId)
-	if err != nil {
-		return err, nil, ""
-	}
-	date := time.Now()
-	if isToday == false {
-		date = date.AddDate(0, 0, 1)
-	}
-
-	day := date.Day()
-	month := int(date.Month())
-	dayWeek := int(date.Weekday())
-	if dayWeek == 0 {
-		dayWeek = 7
-	}
-
-	for _, v := range schedules.EvenWeekDate {
-		if v[0] == day && v[1] == month {
-			return nil, schedules.EvenWeekSchedule[dayWeek-1], "even"
-		}
-	}
-	for _, v := range schedules.OddWeekkDate {
-		if v[0] == day && v[1] == month {
-			return nil, schedules.OddWeekSchedule[dayWeek-1], "odd"
-		}
-	}
-	return errors.New("Вы не состоите ни в одной группе"), nil, ""
-}
 
 // Функция находит все даты дней отсноящихся к четной и нечетной неделе отдельно. Аргумент -   число [день][месяц] понедельника нечетной недели.
 func GetTwoDimensionalArrays(day, month int) ([][]int, [][]int) {
