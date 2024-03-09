@@ -54,7 +54,10 @@ func command(fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) {
 		toUserMsg.Text = "Привет! Чтобы увидеть расписание, откройте панель с меню и присоединитесь к своей группе."
 	default:
 		//Если команда от пользователя не распознается
-		toUserMsg.Text = "Я не знаю эту команду.\nХочешь, добавить такой функционал?\n" + sunEmoji + "Свяжись со мной: https://t.me/Tichomirov2003"
+		toUserMsg.Text = "Я не знаю эту команду.\n"
+		toUserMsg.Text += sunEmoji + "Хочешь, добавить такой функционал?\n"
+		toUserMsg.Text += moonEmoji + "Возникли проблемы?\n"
+		toUserMsg.Text += "Свяжись со мной: https://t.me/Tichomirov2003"
 	}
 }
 
