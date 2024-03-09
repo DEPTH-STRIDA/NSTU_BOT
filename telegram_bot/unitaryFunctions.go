@@ -3,6 +3,7 @@ package telegram_bot
 import (
 	db "NSTU_NN_BOT/local_data_base"
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -38,15 +39,35 @@ var inlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 
 // Обработка неизвестных команд.
 func unknownСommand() (str string) {
-	str = "Я не знаю эту команду.\n"
+	str = "Я не знаю эту команду.\n\n"
 	str += sunEmoji + "Хочешь, добавить такой функционал?\n"
-	str += moonEmoji + "Возникли проблемы?\n"
+	str += moonEmoji + "Возникли проблемы?\n\n"
 	str += "Свяжись со мной: https://t.me/Tichomirov2003"
 	return str
 }
 
 // Вспомогательная функция, которая возвращает название дня недели по номеру. Нумирация с 0, начиная с понедельника.
-func weekday(n int) string {
+func weekdayByName(n time.Weekday) string {
+	switch n {
+	case time.Monday:
+		return "Понедельник"
+	case time.Tuesday:
+		return "Вторник"
+	case time.Wednesday:
+		return "Среда"
+	case time.Thursday:
+		return "Четверг"
+	case time.Friday:
+		return "Пятница"
+	case time.Saturday:
+		return "Суббота"
+	case time.Sunday:
+		return "Воскресенье"
+	default:
+		return ""
+	}
+}
+func weekdayByIndex(n int) string {
 	switch n {
 	case 0:
 		return "Понедельник"
@@ -68,63 +89,135 @@ func weekday(n int) string {
 }
 
 // Функция, которая возвращает расписание на этот день
-func todayOrTomorrow(isToday bool, fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) (string, error) {
-	//Режим чтения строковых перменных. Позволяет использовать метки HTML.
-	toUserMsg.ParseMode = "HTML"
-
-	err, schedule, evenOrOdd := db.GetThisOrNexntDay(isToday, &fromUserMsg.Chat.ID)
-	if err != nil {
-		if err.Error() == "Вы не состоите ни в одной группе" {
-			return err.Error(), nil
-		} else {
-			return err.Error(), err
-		}
-
-	}
-	date := time.Now()
-	if !isToday {
-		date = date.AddDate(0, 0, 1)
-	}
-	toReturn := moonEmoji + "<b>Нечетная неделя</b>\n"
-	if evenOrOdd == "even" {
-		toReturn = sunEmoji + "<b>Четная неделя</b>\n"
-	}
-	toReturn += clockEmoji + " " + time.Now().Format("02.01 - 15:04") + "\n"
-	toReturn += dayEmoji + " <b>" + weekday(int(date.Weekday())-1) + "</b>\n\n"
-	for _, v := range schedule {
-		toReturn += checkBoxEmoji + " " + v + "\n"
-	}
-	return toReturn, nil
-}
-
-// Получить расписание на сегодня
-func GetThisOrNexntDay(isToday bool, chatId *int64) (error, []string, string) {
+func getSchedule(dayType string, fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) (string, error) {
 	//Получае расписание, если пользователь есть в БД
-	err, schedules := db.GetSchedule(chatId)
+	err, schedules := db.GetSchedule(&fromUserMsg.Chat.ID)
 	if err != nil {
-		return err, nil, ""
+		return "К сожалению вас нет в базе данных. Обратитесь в поддержку.", err
 	}
 	date := time.Now()
-	if isToday == false {
+	//Если нужно расписание на завтра, то прибавляем день.
+	if dayType == "завтра" {
 		date = date.AddDate(0, 0, 1)
 	}
-
 	day := date.Day()
 	month := int(date.Month())
 	dayWeek := int(date.Weekday())
 	if dayWeek == 0 {
 		dayWeek = 7
 	}
+	fond := false
+	var schedule []string
+	toReturn := ""
 
+	toUserMsg.ParseMode = "HTML"
 	for _, v := range schedules.EvenWeekDate {
 		if v[0] == day && v[1] == month {
-			return nil, schedules.EvenWeekSchedule[dayWeek-1], "even"
+			toReturn = moonEmoji + "<b>Четная неделя</b>\n"
+			fond = true
+			schedule = schedules.EvenWeekSchedule[dayWeek-1]
 		}
 	}
-	for _, v := range schedules.OddWeekkDate {
-		if v[0] == day && v[1] == month {
-			return nil, schedules.OddWeekSchedule[dayWeek-1], "odd"
+	if !fond {
+		for _, v := range schedules.OddWeekkDate {
+			if v[0] == day && v[1] == month {
+				toReturn = moonEmoji + "<b>Нечетная неделя</b>\n"
+				schedule = schedules.OddWeekSchedule[dayWeek-1]
+				fond = true
+			}
 		}
 	}
-	return errors.New("Вы не состоите ни в одной группе"), nil, ""
+	if !fond {
+		return "Для вашей группы не составлено расписание четных, нечетных недель", errors.New("расписание не найдено в БД. Необходимо составить расписание четных нечетных недель")
+	}
+	//Дата запроса
+	toReturn += clockEmoji + " " + time.Now().Format("02.01") + "\n"
+	toReturn += dayEmoji + " <b>" + weekdayByName(date.Weekday()) + "</b>\n\n"
+	fmt.Println("today ", int(date.Weekday()))
+	isEmpty := true
+	for _, v := range schedule {
+		if v != "" {
+			isEmpty = false
+			toReturn += checkBoxEmoji + " " + v + "\n"
+		}
+	}
+	if isEmpty {
+		toReturn += checkBoxEmoji + "<b>В этот день ничего нет.</b>"
+
+	}
+	return toReturn, nil
+}
+
+// Собирает все расписание для пользователя.
+func all(fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) (string, error) {
+	toUserMsg.ParseMode = "HTML"
+	err, schedule := db.GetSchedule(&fromUserMsg.Chat.ID)
+	if err != nil {
+		return "Не удалось получить расписание вашей группы. Обратитесь в поддержку.", err
+	}
+	/////////////////////////////////////////////////////////////
+	///                   ЧЕТНАЯ НЕДЕЛЯ
+	toReturn := sunEmoji + " <b>Четная неделя:</b>\n"
+	isEmpty := true
+	for i, v := range schedule.EvenWeekSchedule {
+		if i != 0 {
+			toReturn += "\n"
+		}
+		isEmpty = true
+		toReturn += dayEmoji + " <b>" + weekdayByIndex(i) + "</b>:\n"
+		for _, k := range v {
+			if k != "" {
+				isEmpty = false
+				toReturn += checkBoxEmoji + " " + k + "\n"
+			}
+		}
+		if isEmpty {
+			toReturn += checkBoxEmoji + "<b>В этот день ничего нет.</b> " + "\n"
+		}
+
+	}
+	///
+	/////////////////////////////////////////////////////////////
+	///                 НЕЧЕТНАЯ НЕДЕЛЯ
+	toReturn += "\n\n" + moonEmoji + " <b>Нечетная неделя:</b>\n"
+	for i, v := range schedule.OddWeekSchedule {
+		if i != 0 {
+			toReturn += "\n"
+		}
+		isEmpty = true
+		toReturn += dayEmoji + " <b>" + weekdayByIndex(i) + "</b>:\n"
+		for _, k := range v {
+			if k != "" {
+				isEmpty = false
+				toReturn += checkBoxEmoji + " " + k + "\n"
+			}
+		}
+		if isEmpty {
+			toReturn += checkBoxEmoji + "<b>В этот день ничего нет.</b> " + "\n"
+		}
+	}
+	///
+	/////////////////////////////////////////////////////////////
+	return toReturn, nil
+}
+
+// Присоединяет пользователя к группе, удаляя его из старой группы.
+func join() (string, tgbotapi.InlineKeyboardMarkup, error) {
+	err, groupsList := db.GetGroupsList()
+	if err != nil {
+		return "Произошла ошибка (", tgbotapi.NewInlineKeyboardMarkup(), err
+	}
+	tempMenu := [][]tgbotapi.InlineKeyboardButton{}
+	row := []tgbotapi.InlineKeyboardButton{}
+	for i, v := range *groupsList {
+		row = append(row, tgbotapi.NewInlineKeyboardButtonData(v.Name, v.Name))
+		if (i+1)%3 == 0 {
+			tempMenu = append(tempMenu, row)
+			row = []tgbotapi.InlineKeyboardButton{}
+		}
+	}
+	if len(row) <= 2 && len(row) > 0 {
+		tempMenu = append(tempMenu, row)
+	}
+	return "Расписание какой группы Вы хотите видеть?", tgbotapi.InlineKeyboardMarkup{InlineKeyboard: tempMenu}, nil
 }
