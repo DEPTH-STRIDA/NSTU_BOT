@@ -1,0 +1,40 @@
+{{define "noAdmin"}}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+ <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ff0b0b">
+  <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <link rel="stylesheet" href="/static/css/noAdmin.css" />
+
+  <title>Вы не админ</title>
+  <meta name="description" content=""/>
+</head>
+  <body > 
+    
+  <div class="container">
+  <div class="interior">
+    <a class="btn" href="#open-modal">👋 Получить доступ</a>
+  </div>
+</div>
+<div id="open-modal" class="modal-window">
+  <div>
+    <a href="#" title="close" class="modal-close">Закрыть</a>
+    <h1>Привет</h1>
+    <div id="text">Доступ позволит создавать свои группы и редактировать расписание.</div>
+    <br>
+    <div><small>Ссылка 👇</small></div>
+    <a href="https://t.me/Tichomirov2003" target="_blank">
+      Ткни меня.
+  </div>
+</div>
+</div>
+
+  </body>
+</html>
+{{end}}   
