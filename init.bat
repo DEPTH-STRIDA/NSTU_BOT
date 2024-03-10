@@ -1,3 +1,6 @@
 @echo off
-echo cd C:\Users\Максим\Desktop\Программирование\Проекты\Телеграм бот для вуза\Telegram_bot & go mod init NSTU_NN_BOT & go get github.com/go-telegram-bot-api/telegram-bot-api/v5 & go get github.com/gorilla/mux
+setlocal
+set "batch_dir=%~dp0"
+echo cd %batch_dir%  & go mod init NSTU_NN_BOT & go get github.com/go-telegram-bot-api/telegram-bot-api/v5 & go get github.com/gorilla/mux
 pause
+endlocal

@@ -18,7 +18,7 @@ type AdminList struct {
 // Функция проверяет является ли переданный пользователь Админом
 func IsAdmin(ChatId *int64) bool {
 	adminList := AdminList{}
-	file, err := ioutil.ReadFile("local_data_base/Jsons/admin_list.json")
+	file, err := os.ReadFile("local_data_base/Jsons/admin_list.json")
 	if err != nil {
 		return false
 	}
@@ -44,7 +44,7 @@ type GroupList struct {
 // Функция, которая возвращает ссылку на массив структур с группами
 func GetGroupsList() (error, *[]GroupList) {
 	groupList := &[]GroupList{}
-	file, err := ioutil.ReadFile("local_data_base/Jsons/group_list.json")
+	file, err := os.ReadFile("local_data_base/Jsons/group_list.json")
 	if err != nil {
 		return err, nil
 	}
@@ -58,7 +58,7 @@ func GetGroupsList() (error, *[]GroupList) {
 // Создает группы с указанным именем и добавлей ей админа.
 func CreateGroup(groupName string, chatId int64) error {
 	groupList := []GroupList{}
-	file, err := ioutil.ReadFile("local_data_base/Jsons/group_list.json")
+	file, err := os.ReadFile("local_data_base/Jsons/group_list.json")
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func DeleteGroup(nameGroup string) error {
 		if v.Name != nameGroup {
 			toReturnGropuList = append(toReturnGropuList, v)
 		} else {
-			err = os.Remove("local_data_base/Jsons/" + nameGroup + ".json")
+			err = os.Remove("local_data_base/Jsons/groups/" + nameGroup + ".json")
 			if err != nil {
 				fmt.Println("Ошибка при удалении файла:", err)
 				return err
@@ -193,11 +193,11 @@ func GetSchedule(chatId *int64) (error, *Schedule) {
 	//Проверяем есть ли там переданный id
 	err, groupName := IsInside(groupList, chatId)
 	if err != nil {
-		return errors.New("Вы не состоите ни в одной группе"), &Schedule{}
+		return errors.New("вы не состоите ни в одной группе"), &Schedule{}
 	}
 	//Берем расписание этой группы
 	schedules := Schedule{}
-	file, err := ioutil.ReadFile("local_data_base/Jsons/" + groupName + ".json")
+	file, err := ioutil.ReadFile("local_data_base/Jsons/groups/" + groupName + ".json")
 	if err != nil {
 		return err, &Schedule{}
 	}
@@ -225,7 +225,7 @@ func CreateSchedule(groupname string, day, month int, EvenWeekSchedule [][]strin
 	even, odd := GetTwoDimensionalArrays(day, month)
 	schedule := Schedule{groupname, EvenWeekSchedule, OddWeekSchedule, even, odd}
 	// Создание файла для записи
-	file, err := os.Create("local_data_base/Jsons/" + groupname + ".json")
+	file, err := os.Create("local_data_base/Jsons/groups/" + groupname + ".json")
 	if err != nil {
 		fmt.Println("Ошибка при создании файла:", err)
 		return err
@@ -244,7 +244,6 @@ func CreateSchedule(groupname string, day, month int, EvenWeekSchedule [][]strin
 
 	return nil
 }
-
 
 // Функция находит все даты дней отсноящихся к четной и нечетной неделе отдельно. Аргумент -   число [день][месяц] понедельника нечетной недели.
 func GetTwoDimensionalArrays(day, month int) ([][]int, [][]int) {
