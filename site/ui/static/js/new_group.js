@@ -1,15 +1,9 @@
 let tg = window.Telegram.WebApp
-////////////////////
-let isEnable = false
-let groupName = ""
-///////////////////
 function callGoFunction() {
     var inputElement = document.getElementById("groupNameInput");
     var inputValue = inputElement.value;
     inputValue=inputValue.trim()
     inputElement.value=inputValue
-
-    var button=document.getElementById("first_button");
 
     var xhr = new XMLHttpRequest();
     var url = "/checkGroupName";
@@ -24,20 +18,12 @@ function callGoFunction() {
     // Обработчик события onload для выполнения действий после успешного завершения запроса
     xhr.onload = function() {
         if (xhr.status == 200) {
-            //alert(xhr.responseText)
+            alert(xhr.responseText)
             inputElement.disabled =true
             var buttoninputElement = document.getElementById("first_button");
             buttoninputElement.disabled =true
-
-            button.style.backgroundColor="#bababa";
-            var inputWrapper = document.getElementById("groupNameInput");
-            inputWrapper.style.backgroundColor = "#bababa";
-
-            var buttoninputElement = document.getElementById("hide_label");
-            buttoninputElement.style.display="block";
             change_acces()
-            isEnable=true
-            groupName=inputValue
+
         } else {
             alert(xhr.responseText)
         }
@@ -52,7 +38,7 @@ function disableEnterKey(event) {
     }
   }
 function change_acces(){
-    var block = document.getElementById("schedule");
+    var block = document.getElementById("second_login");
     block.style.display = "block";
 }
 function button_back_tg(){
@@ -72,9 +58,6 @@ function goBack(type_) {
     // Обработчик события onload для выполнения действий после успешного завершения запроса
     xhr.onload = function() {
         if (xhr.status == 200) {
-            ////////////////////////////////////////////////////////////////////
-            /////////////             Сменил id         ////////////////////////
-            ////////////////////////////////////////////////////////////////////
             window.location.href = "/home?id=" + tg.initDataUnsafe.user.id;
         } else {
             console.error("AJAX request failed with status " + xhr.status);
@@ -83,6 +66,4 @@ function goBack(type_) {
 
     xhr.send(params);
 }
-
-
 button_back_tg()

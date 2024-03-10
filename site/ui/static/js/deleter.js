@@ -16,6 +16,8 @@ function callGoFunction(type_) {
       if (element) {
         element.remove();
       }
+    }else{
+        
     }
   };
   
@@ -29,21 +31,3 @@ function showConfirmationPopup(type_) {
     callGoFunction(type_);
   }
 }
-var i=0
-var buttons = document.querySelectorAll("#deleteButton");
-buttons.forEach(function(button) {
-  i+=1
-  button.addEventListener("click", function() {
-    const type_ = this.getAttribute('type');
-    showConfirmationPopup(type_);
-  });
-});
-  if (i==0){
-var containerElement = document.getElementById("page-contain");
-
-// Вставляем новый HTML-код внутрь контейнера
-containerElement.innerHTML = '<a class="data-card" id="noGroup">' +
-                              '<h2>У вас нет ни одной группы.</h2>' +
-                              '<button class="button-28" role="button" name="popup-button" onclick="button_action()">Создать группу</button>' +
-                              '</a>';
-  }

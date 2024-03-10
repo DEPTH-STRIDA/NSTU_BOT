@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 )
 
+// ////////////////////////////////////////////////////////////////
 // Структура содержит массив админов.
 type AdminList struct {
 	Admins []int64 `json:"admins"`
@@ -34,6 +34,9 @@ func IsAdmin(ChatId *int64) bool {
 	return false
 }
 
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
+
 // Структура представляет собой 1 группу, владельца, участников.
 type GroupList struct {
 	Name      string
@@ -42,17 +45,17 @@ type GroupList struct {
 }
 
 // Функция, которая возвращает ссылку на массив структур с группами
-func GetGroupsList() (error, *[]GroupList) {
+func GetGroupsList() (*[]GroupList, error) {
 	groupList := &[]GroupList{}
 	file, err := os.ReadFile("local_data_base/Jsons/group_list.json")
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	err = json.Unmarshal(file, groupList)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
-	return nil, groupList
+	return groupList, nil
 }
 
 // Создает группы с указанным именем и добавлей ей админа.
@@ -68,7 +71,7 @@ func CreateGroup(groupName string, chatId int64) error {
 	}
 	for _, v := range groupList {
 		if v.Name == groupName {
-			return errors.New("Такое имя группы уже занято")
+			return errors.New("такое имя группы уже занято")
 		}
 	}
 	fmt.Println(groupList)
@@ -81,7 +84,7 @@ func CreateGroup(groupName string, chatId int64) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile("local_data_base/Jsons/group_list.json", jsonData, 0644)
+	err = os.WriteFile("local_data_base/Jsons/group_list.json", jsonData, 0644)
 	if err != nil {
 		return err
 	}
@@ -90,7 +93,7 @@ func CreateGroup(groupName string, chatId int64) error {
 
 // Функция удаляет группу
 func DeleteGroup(nameGroup string) error {
-	err, groupList := GetGroupsList()
+	groupList, err := GetGroupsList()
 	if err != nil {
 		return err
 	}
@@ -111,7 +114,7 @@ func DeleteGroup(nameGroup string) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile("local_data_base/Jsons/group_list.json", jsonData, 0644)
+	err = os.WriteFile("local_data_base/Jsons/group_list.json", jsonData, 0644)
 	if err != nil {
 		return err
 	}
@@ -119,20 +122,20 @@ func DeleteGroup(nameGroup string) error {
 }
 
 // Функция, которая возвращает имя группы по ID из БД.
-func IsInside(groupList *[]GroupList, chatId *int64) (error, string) {
+func IsInside(groupList *[]GroupList, chatId *int64) (string, error) {
 	for _, v := range *groupList {
 		for _, j := range v.Structure {
 			if j == *chatId {
-				return nil, v.Name
+				return v.Name, nil
 			}
 		}
 	}
-	return errors.New("ChatId: " + fmt.Sprint(*chatId) + " - нет в бд"), ""
+	return "", errors.New("ChatId: " + fmt.Sprint(*chatId) + " - нет в бд")
 }
 
 // Функция выполняет присоединение участника к группе. Предворительно удалив его из предыдущей группы.
 func AddUserToGroup(chatId int64, nameGroup string) error {
-	err, groupList := GetGroupsList()
+	groupList, err := GetGroupsList()
 	if err != nil {
 		return err
 	}
@@ -153,7 +156,7 @@ func AddUserToGroup(chatId int64, nameGroup string) error {
 		}
 	}
 
-	for i, _ := range *groupList {
+	for i := range *groupList {
 		if (*groupList)[i].Name == nameGroup {
 			(*groupList)[i].Structure = append((*groupList)[i].Structure, chatId)
 			break
@@ -164,12 +167,15 @@ func AddUserToGroup(chatId int64, nameGroup string) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile("local_data_base/Jsons/group_list.json", jsonData, 0644)
+	err = os.WriteFile("local_data_base/Jsons/group_list.json", jsonData, 0644)
 	if err != nil {
 		return err
 	}
 	return nil
 }
+
+//////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
 
 // Шаблон заполнения расписания для группы
 type Schedule struct {
@@ -184,32 +190,32 @@ type Schedule struct {
 }
 
 // Функция, которая возвращает расписание если он ессть в БД.
-func GetSchedule(chatId *int64) (error, *Schedule) {
+func GetSchedule(chatId *int64) (*Schedule, error) {
 	//Получем список групп
-	err, groupList := GetGroupsList()
+	groupList, err := GetGroupsList()
 	if err != nil {
-		return err, &Schedule{}
+		return &Schedule{}, err
 	}
 	//Проверяем есть ли там переданный id
-	err, groupName := IsInside(groupList, chatId)
+	groupName, err := IsInside(groupList, chatId)
 	if err != nil {
-		return errors.New("вы не состоите ни в одной группе"), &Schedule{}
+		return &Schedule{}, errors.New("вы не состоите ни в одной группе")
 	}
 	//Берем расписание этой группы
 	schedules := Schedule{}
-	file, err := ioutil.ReadFile("local_data_base/Jsons/groups/" + groupName + ".json")
+	file, err := os.ReadFile("local_data_base/Jsons/groups/" + groupName + ".json")
 	if err != nil {
-		return err, &Schedule{}
+		return &Schedule{}, err
 	}
 	err = json.Unmarshal(file, &schedules)
 	if err != nil {
-		return err, &Schedule{}
+		return &Schedule{}, err
 	}
-	return nil, &schedules
+	return &schedules, nil
 }
 func CreateSchedule(groupname string, day, month int, EvenWeekSchedule [][]string, OddWeekSchedule [][]string) error {
 	//Получем список групп
-	err, groupList := GetGroupsList()
+	groupList, err := GetGroupsList()
 	if err != nil {
 		return err
 	}
@@ -219,8 +225,8 @@ func CreateSchedule(groupname string, day, month int, EvenWeekSchedule [][]strin
 			isInside = true
 		}
 	}
-	if isInside == false {
-		return errors.New("Такой группы не в БД.")
+	if !isInside {
+		return errors.New("такой группы не в БД")
 	}
 	even, odd := GetTwoDimensionalArrays(day, month)
 	schedule := Schedule{groupname, EvenWeekSchedule, OddWeekSchedule, even, odd}

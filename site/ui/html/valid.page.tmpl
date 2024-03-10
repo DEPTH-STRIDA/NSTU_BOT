@@ -1,1 +1,30 @@
+{{define "valid"}}
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#ff0b0b" />
+		<link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<script src="https://telegram.org/js/telegram-web-app.js"></script>
+		<script src="/static/js/valid.js"></script>
+
+		<link rel="stylesheet" href="/static/css/valid.css" />
+
+		<title>Меню для админов</title>
+		<meta name="description" content="" />
+	</head>
+	<body onload="initialization()">
+		<div class="tetrominos">
+			<div class="tetromino box1"></div>
+			<div class="tetromino box2"></div>
+			<div class="tetromino box3"></div>
+			<div class="tetromino box4"></div>
+		</div>
+	</body>
+</html>
+{{end}}
+
 {{template "valid" .}}

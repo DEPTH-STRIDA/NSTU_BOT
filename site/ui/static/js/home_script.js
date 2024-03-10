@@ -3,14 +3,44 @@ let tg = window.Telegram.WebApp
 function start() {
   let intervalId = setInterval(function() {
       if (tg.initData && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+          var i=0
+var buttons = document.querySelectorAll("#deleteButton");
+buttons.forEach(function(button) {
+  i+=1
+  button.addEventListener("click", function() {
+    const type_ = this.getAttribute('type');
+    showConfirmationPopup(type_);
+  });
+});
+  if (i===0){
+var containerElement = document.getElementById("page-contain");
+
+// Вставляем новый HTML-код внутрь контейнера
+containerElement.innerHTML = '<a class="data-card" id="noGroup">' +
+                              '<h2>У вас нет ни одной группы.</h2>' +
+                              '<button class="button-28" role="button" name="popup-button" onclick="button_action()">Создать группу</button>' +
+                              '</a>';
+  }
+          var scheduleButtons = document.querySelectorAll("#scheduleButton");
+
+scheduleButtons.forEach(function(button) {
+  button.addEventListener("click", function() {
+    const type_ = this.getAttribute('type');
+    test(type_);
+  });
+});
+Telegram.WebApp.onEvent('backButtonClicked', function(){
+        tg.close()
+    });
+    tg.BackButton.show()
+
           chekData()
           clearInterval(intervalId);
           return
       } else {
-
           console.error('tg.initData is not available yet.');
       }
-  }, 3000)
+  }, 100)
 }
 // function callGoFunctionData(type_) {
 //   var xhr = new XMLHttpRequest();

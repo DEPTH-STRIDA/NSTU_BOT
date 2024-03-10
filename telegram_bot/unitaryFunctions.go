@@ -91,7 +91,7 @@ func weekdayByIndex(n int) string {
 // Функция, которая возвращает расписание на этот день
 func getSchedule(dayType string, fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) (string, error) {
 	//Получае расписание, если пользователь есть в БД
-	err, schedules := db.GetSchedule(&fromUserMsg.Chat.ID)
+	schedules, err := db.GetSchedule(&fromUserMsg.Chat.ID)
 	if err != nil {
 		return "К сожалению вас нет в базе данных. Обратитесь в поддержку.", err
 	}
@@ -151,7 +151,7 @@ func getSchedule(dayType string, fromUserMsg *tgbotapi.Message, toUserMsg *tgbot
 // Собирает все расписание для пользователя.
 func all(fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) (string, error) {
 	toUserMsg.ParseMode = "HTML"
-	err, schedule := db.GetSchedule(&fromUserMsg.Chat.ID)
+	schedule, err := db.GetSchedule(&fromUserMsg.Chat.ID)
 	if err != nil {
 		return "Не удалось получить расписание вашей группы. Обратитесь в поддержку.", err
 	}
@@ -203,7 +203,7 @@ func all(fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) (stri
 
 // Присоединяет пользователя к группе, удаляя его из старой группы.
 func join() (string, tgbotapi.InlineKeyboardMarkup, error) {
-	err, groupsList := db.GetGroupsList()
+	groupsList, err := db.GetGroupsList()
 	if err != nil {
 		return "Произошла ошибка (", tgbotapi.NewInlineKeyboardMarkup(), err
 	}

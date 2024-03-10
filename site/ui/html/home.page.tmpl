@@ -1,1 +1,40 @@
+{{define "home"}}
+<!DOCTYPE html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="icon" href="/static/img/favicon.ico" type="image/x-icon" />
+		<meta name="theme-color" content="#ff0b0b" />
+
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+		<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+		<link rel="stylesheet" href="/static/css/button.css" />
+		<link rel="stylesheet" href="/static/css/style.css" />
+		<link rel="stylesheet" href="/static/css/button_fix.css" />
+
+		<script src="/static/js/home_script.js"></script>
+		<script src="/static/js/deleter.js"></script>
+		<script src="/static/js/change_schedule_button.js"></script>
+
+		<title>Список групп</title>
+		<meta name="description" content="" />
+	</head>
+	<body id="body" onload="start()">
+
+		<section class="page-contain" id="page-contain">
+			{{range .TextSlice}}
+			<a class="data-card" id="id_{{.}}">
+				<h3>{{.}}</h3>
+				<button class="button-28" role="button" type="{{.}}" id="deleteButton" name="popup-button">Удалить группу</button>
+				<button class="button-28" role="button" type="{{.}}" id="scheduleButton" name="popup-button">Редактировать расписание</button>
+			</a>
+			{{end}}
+		</section>
+
+	</body>
+</html>
+{{end}}
+
 {{template "home" .}}

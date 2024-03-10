@@ -1,20 +1,37 @@
-$(document).ready(function() {
-    // Счетчики для индексов полей ввода
-    let even_mondayIndex = 1;
-    let even_tuesdayIndex = 1;
-    let even_wednesdayIndex = 1;
-    let even_thursdayIndex = 1;
-    let even_fridayIndex = 1;
-    let even_saturdayIndex = 1;
-    let even_sundayIndex = 1;
+function countSubjects() {
+    let subjectsCount = {};
 
-    let odd_mondayIndex = 1;
-    let odd_tuesdayIndex = 1;
-    let odd_wednesdayIndex = 1;
-    let odd_thursdayIndex = 1;
-    let odd_fridayIndex = 1;
-    let odd_saturdayIndex = 1;
-    let odd_sundayIndex = 1;
+    const days = ['even_monday', 'even_tuesday', 'even_wednesday', 'even_thursday', 'even_friday', 'even_saturday', 'even_sunday',
+        'odd_monday', 'odd_tuesday', 'odd_wednesday', 'odd_thursday', 'odd_friday', 'odd_saturday', 'odd_sunday'];
+
+    days.forEach(day => {
+        const inputs = document.querySelectorAll(`input[id^=${day}]`);
+        subjectsCount[day + 'Index'] = inputs.length;
+    });
+
+    return subjectsCount;
+}
+
+$(document).ready(function() {
+    // Пример использования
+const subjectsCount = countSubjects();
+console.log(subjectsCount);
+    // Счетчики для индексов полей ввода
+    let even_mondayIndex = subjectsCount.even_mondayIndex;
+let even_tuesdayIndex = subjectsCount.even_tuesdayIndex;
+let even_wednesdayIndex = subjectsCount.even_wednesdayIndex;
+let even_thursdayIndex = subjectsCount.even_thursdayIndex;
+let even_fridayIndex = subjectsCount.even_fridayIndex;
+let even_saturdayIndex = subjectsCount.even_saturdayIndex;
+let even_sundayIndex = subjectsCount.even_sundayIndex;
+
+let odd_mondayIndex = subjectsCount.odd_mondayIndex;
+let odd_tuesdayIndex = subjectsCount.odd_tuesdayIndex;
+let odd_wednesdayIndex = subjectsCount.odd_wednesdayIndex;
+let odd_thursdayIndex = subjectsCount.odd_thursdayIndex;
+let odd_fridayIndex = subjectsCount.odd_fridayIndex;
+let odd_saturdayIndex = subjectsCount.odd_saturdayIndex;
+let odd_sundayIndex = subjectsCount.odd_sundayIndex;
     // Функция для создания нового поля ввода
     function createInput(day, index) {
         const newRow = $("<tr>");
@@ -45,7 +62,6 @@ $(document).ready(function() {
             $("#even_tuesday_" + even_tuesdayIndex).closest("tr").remove();
         }
     });
-
     // Обработчики событий для среды
     $("#even_wednesday_plus_button").on("click", function() {
         createInput("even_wednesday", even_wednesdayIndex);
@@ -190,3 +206,4 @@ $(document).ready(function() {
         }
     });
 });
+

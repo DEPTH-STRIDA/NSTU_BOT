@@ -32,14 +32,14 @@ func CreateWebApp(ip, port string) {
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
 
 	if ip == "" && port == "" {
-		trace := fmt.Sprintf("%s\n%s", errors.New("ip и port пустные. Скорее всего переменные среды не найдены."), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", errors.New("ip и port пустные. Скорее всего переменные среды не найдены"), debug.Stack())
 		errorLog.Output(2, trace)
 		return
 	} else if ip == "" && port != "" {
-		trace := fmt.Sprintf("%s\n%s", errors.New("ip пустное, port - не пустое. Скорее всего переменная среды ip не найдена."), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", errors.New("ip пустное, port - не пустое. Скорее всего переменная среды ip не найдена"), debug.Stack())
 		errorLog.Output(2, trace)
 	} else if ip != "" && port == "" {
-		trace := fmt.Sprintf("%s\n%s", errors.New("port пустное, ip - не пустое. Скорее всего переменная среды port не найдена."), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", errors.New("port пустное, ip - не пустое. Скорее всего переменная среды port не найдена"), debug.Stack())
 		errorLog.Output(2, trace)
 	}
 	addr := flag.String("addr", (ip + ":" + port), "Сетевой адрес веб-сервера")
@@ -47,8 +47,8 @@ func CreateWebApp(ip, port string) {
 	templateCache, err := NewTemplateCache("site/ui/html/")
 	if err != nil {
 		trace := fmt.Sprintf("%s\n%s", err, debug.Stack())
-		errorLog.Output(2, trace)
-		return
+		infoLog.Output(2, trace)
+		//return
 	}
 	app := &Application{
 		ErrorLog:      errorLog,

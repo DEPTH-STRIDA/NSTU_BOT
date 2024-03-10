@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-// Собирает шаблоны.
+// NewTemplateCache собирает и кэширует шаблоны из файлов в указанном каталоге.
 func NewTemplateCache(dir string) (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 	pages, err := filepath.Glob(filepath.Join(dir, "*.page.tmpl"))
@@ -18,12 +18,11 @@ func NewTemplateCache(dir string) (map[string]*template.Template, error) {
 		if err != nil {
 			return nil, err
 		}
-		ts, err = ts.ParseGlob(filepath.Join(dir, "*.layout.tmpl"))
+		ts, err = ts.ParseGlob(filepath.Join(dir, "*.page.tmpl"))
 		if err != nil {
 			return nil, err
 		}
 		cache[name] = ts
-
 	}
 	return cache, nil
 }

@@ -20,14 +20,14 @@ var unacceptable_words = [...]string{"сегодня", "завтра", "все",
 
 // обработка и верификация telegram пользователя
 func (app *Application) validating(w http.ResponseWriter, r *http.Request) {
-	app.render(w, r, "valid.page.tmpl")
+	app.render(w, "valid.page.tmpl")
 }
 
 // Обработка аякс запросов. Проверяет данные и возвращает успешный код.
 func (app *Application) validate(w http.ResponseWriter, r *http.Request) {
 	// Проверка метода запроса
 	if r.Method != http.MethodPost {
-		trace := fmt.Sprintf("%s\n%s", errors.New("Invalid request method.\nfunc - validate; line - 26"), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", errors.New("invalid request method.\nfunc - validate; line - 26"), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		http.Error(w, "Invalid request method.\nfunc - validate", http.StatusMethodNotAllowed)
 		return
@@ -35,7 +35,7 @@ func (app *Application) validate(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseForm()
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("Error parsing form data\nfunc - validate; line - 33"), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", errors.New("error parsing form data\nfunc - validate; line - 33"), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		http.Error(w, "Error parsing form data\nfunc - validate; line - 33", http.StatusBadRequest)
 		return
@@ -64,16 +64,16 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("Ошибка конвертации id, возможно пользователь зашел не из telegram.\nfunc - home; line - 62"), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", errors.New("ошибка конвертации id, возможно пользователь зашел не из telegram.\nfunc - home; line - 62"), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		return
 	}
 	//Если пользователь не является админом, высылаем ему заглушку.
-	if local_data_base.IsAdmin(&intId) == false {
-		app.render(w, r, "noAdmin.page.tmpl")
+	if !local_data_base.IsAdmin(&intId) {
+		app.render(w, "noAdmin.page.tmpl")
 		return
 	}
-	err, groupList := local_data_base.GetGroupsList()
+	groupList, err := local_data_base.GetGroupsList()
 	if err != nil {
 		trace := fmt.Sprintf("%s\n%s", errors.New("Ошибка получения списка групп.\nfunc - home; line - 73\n"+err.Error()), debug.Stack())
 		app.ErrorLog.Output(2, trace)
@@ -89,9 +89,9 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 	data := Data{textSlice}
 	ts, ok := app.TemplateCache["home.page.tmpl"]
 	if !ok {
-		trace := fmt.Sprintf("%s\n%s", fmt.Errorf("Шаблон %s не существует!", "home.page.tmpl\nfunc - home; line - 87"), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", fmt.Errorf("шаблон %s не существует", "home.page.tmpl\nfunc - home; line - 87"), debug.Stack())
 		app.ErrorLog.Output(2, trace)
-		app.serverError(w, fmt.Errorf("Шаблон %s не существует!", "home.page.tmpl"))
+		app.serverError(w, fmt.Errorf("шаблон %s не существует", "home.page.tmpl"))
 		return
 	}
 
@@ -101,14 +101,14 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 		app.ErrorLog.Output(2, trace)
 		app.serverError(w, err)
 	}
-	app.InfoLog.Output(2, "На главную страницу успешно зашел пользователь. ")
-	app.render(w, r, "home.page.tmpl")
+	app.InfoLog.Output(2, "На главную страницу успешно зашел пользователь. "+string(id))
+	app.render(w, "home.page.tmpl")
 }
 
 // Страница с добавлением новой группы.
 func (app *Application) new_group(w http.ResponseWriter, r *http.Request) {
 	app.InfoLog.Output(2, "На страницу создания группы успешно зашел пользователь. ")
-	app.render(w, r, "new_group.page.tmpl")
+	app.render(w, "new_group.page.tmpl")
 }
 
 // Обработка запросов на корректность имени группы.
@@ -121,16 +121,16 @@ func (app *Application) checkGroupName(w http.ResponseWriter, r *http.Request) {
 	}
 	err := r.ParseForm()
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("func - checkGroupName; line - 119\nИмя использует запрещенные/некорректные символы."), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", errors.New("func - checkGroupName; line - 119\nИмя использует запрещенные/некорректные символы"), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		http.Error(w, "Имя использует запрещенные символы.", http.StatusBadRequest)
 		return
 	}
 	groupName := r.Form.Get("groupName")
 	id := r.Form.Get("id")
-	err, groupList := local_data_base.GetGroupsList()
+	groupList, err := local_data_base.GetGroupsList()
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("func - checkGroupName; line - 128\nОшибка при получении списка групп."+err.Error()), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", errors.New("func - checkGroupName; line - 128\nОшибка при получении списка групп"+err.Error()), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		w.WriteHeader(http.StatusBadGateway)
 		http.Error(w, "Неизвестная ошибка. Подождите или сообщите в тех. поддержку.", http.StatusBadRequest)
@@ -217,7 +217,7 @@ func (app *Application) creatingGroup(w http.ResponseWriter, r *http.Request) {
 	////////////////            Зачем это тут?          ////////////////////////
 	////////////////////////////////////////////////////////////////////////////
 	app.InfoLog.Output(2, "Пользователь "+fmt.Sprint(intId)+" успешно подтвердил запрос на создание группы.")
-	app.render(w, r, "create.page.tmpl")
+	app.render(w, "create.page.tmpl")
 }
 
 // Обработка запросов на удаление группы.
@@ -225,7 +225,7 @@ func (app *Application) deleteGroup(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		err := r.ParseForm()
 		if err != nil {
-			trace := fmt.Sprintf("%s\n%s", errors.New("Error parsing form.\nfunc - deleteGroup; line - 226"), debug.Stack())
+			trace := fmt.Sprintf("%s\n%s", errors.New("error parsing form.\nfunc - deleteGroup; line - 226"), debug.Stack())
 			app.ErrorLog.Output(2, trace)
 			http.Error(w, "Error parsing form", http.StatusBadRequest)
 			return
@@ -233,7 +233,7 @@ func (app *Application) deleteGroup(w http.ResponseWriter, r *http.Request) {
 		groupname := r.Form.Get("groupname")
 		err = local_data_base.DeleteGroup(groupname)
 		if err != nil {
-			trace := fmt.Sprintf("%s\n%s", errors.New("Invalid request method.\nfunc - deleteGroup; line - 234"), debug.Stack())
+			trace := fmt.Sprintf("%s\n%s", errors.New("invalid request method.\nfunc - deleteGroup; line - 234"), debug.Stack())
 			app.ErrorLog.Output(2, trace)
 			http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 			return
@@ -241,7 +241,7 @@ func (app *Application) deleteGroup(w http.ResponseWriter, r *http.Request) {
 		app.InfoLog.Output(2, "Группа "+groupname+" - успешно удалена")
 		fmt.Fprintf(w, "Группа: %s - успешно удалена", groupname)
 	} else {
-		trace := fmt.Sprintf("%s\n%s", errors.New("Invalid request method, неправильный запрос на удаление группы.\nfunc - deleteGroup; line - 225,243"), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", errors.New("invalid request method, неправильный запрос на удаление группы.\nfunc - deleteGroup; line - 225,243"), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
