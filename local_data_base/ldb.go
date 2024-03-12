@@ -213,7 +213,13 @@ func GetSchedule(chatId *int64) (*Schedule, error) {
 	}
 	return &schedules, nil
 }
+
+// Функция создает группу (просчитывает четные-нечетные недели)
 func CreateSchedule(groupname string, day, month int, EvenWeekSchedule [][]string, OddWeekSchedule [][]string) error {
+	//Уменьшаем индекс дня
+	if day != 1 {
+		day -= 1
+	}
 	//Получем список групп
 	groupList, err := GetGroupsList()
 	if err != nil {
@@ -257,7 +263,7 @@ func GetTwoDimensionalArrays(day, month int) ([][]int, [][]int) {
 	var evenWeeks [][]int
 	var oddWeeks [][]int
 
-	for i := 0; i < 26; i++ {
+	for i := 0; i < 55; i++ {
 		for j := 0; j < 7; j++ {
 			//Массив Месяц-День
 			days := []int{}

@@ -4,7 +4,6 @@ package main
 
 import (
 	site "NSTU_NN_BOT/site/ui"
-
 	bot "NSTU_NN_BOT/telegram_bot"
 	"os"
 )

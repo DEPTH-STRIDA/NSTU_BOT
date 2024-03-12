@@ -45,7 +45,7 @@ function start() {
         }
     }, 100)
 }
-// function callGoFunctionData(type_) {
+// function initialization(type_) {
 //   var xhr = new XMLHttpRequest();
 //    var url = "/validate";
 //    var params = "token=" + type_;
@@ -100,7 +100,7 @@ function button_tg() {
 //////////////////////////////////////////////
 ///                deleter                 ///
 //////////////////////////////////////////////
-function callGoFunction(type_) {
+function initialization(type_) {
     // Функция для вызова удаления группы
     var xhr = new XMLHttpRequest();
     var url = "/deleteGroup";
@@ -130,7 +130,7 @@ function callGoFunction(type_) {
     // Функция для отображения всплывающего окна подтверждения
     var confirmation = confirm("Вы уверены, что хотите удалить группу?");
     if (confirmation) {
-      callGoFunction(type_);
+      initialization(type_);
     }
   }
   

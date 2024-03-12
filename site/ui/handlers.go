@@ -6,10 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"runtime"
 	"runtime/debug"
 	"strconv"
-	"time"
 )
+
+////////////////////////////////////////////////////////
+///                    УНИТАРНОЕ                     ///
+////////////////////////////////////////////////////////
 
 type Data struct {
 	TextSlice []string
@@ -18,67 +22,46 @@ type Data struct {
 // Недопустимые слова для названий групп
 var unacceptable_words = [...]string{"сегодня", "завтра", "все", "выбор группы", "меню админа", "/open", "/close", "/start"}
 
+func createError(str string) error {
+	pc, _, _, _ := runtime.Caller(1)
+	callerFunction := runtime.FuncForPC(pc).Name()
+	_, _, line, _ := runtime.Caller(1)
+	return errors.New(str + " callerFunction: " + callerFunction + " line: " + fmt.Sprint(line))
+}
+
+////////////////////////////////////////////////////////
+///                    СТРАНИЦЫ                      ///
+////////////////////////////////////////////////////////
+
 // обработка и верификация telegram пользователя
 func (app *Application) validating(w http.ResponseWriter, r *http.Request) {
 	app.render(w, "valid.page.tmpl")
-}
-
-// Обработка аякс запросов. Проверяет данные и возвращает успешный код.
-func (app *Application) validate(w http.ResponseWriter, r *http.Request) {
-	// Проверка метода запроса
-	if r.Method != http.MethodPost {
-		trace := fmt.Sprintf("%s\n%s", errors.New("invalid request method.\nfunc - validate; line - 26"), debug.Stack())
-		app.ErrorLog.Output(2, trace)
-		http.Error(w, "Invalid request method.\nfunc - validate", http.StatusMethodNotAllowed)
-		return
-	}
-
-	err := r.ParseForm()
-	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("error parsing form data\nfunc - validate; line - 33"), debug.Stack())
-		app.ErrorLog.Output(2, trace)
-		http.Error(w, "Error parsing form data\nfunc - validate; line - 33", http.StatusBadRequest)
-		return
-	}
-
-	token := r.Form.Get("token")
-	//fmt.Println(token)
-	//err = valid.Validate(token, os.Getenv("NSTU_NN_BOT"), 5*time.Minute)
-	//if err != nil {
-	//fmt.Println(err.Error())
-	// Ответ клиенту
-	w.WriteHeader(http.StatusOK)
-	app.InfoLog.Output(2, "На сайт успешно зашел пользователь. ")
-	fmt.Fprintf(w, "Token received successfully: %s", token)
-	//} else {
-	//// Ответ клиенту
-	//	w.WriteHeader(http.StatusOK)
-	//	fmt.Fprintf(w, "Token received successfully: %s", token)
-	//}
 }
 
 // Главная страница - список групп
 func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 	// Извлечение параметра "userID" из строки запроса
 	id := r.URL.Query().Get("id")
-
+	//Парсин strint в int64
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("ошибка конвертации id, возможно пользователь зашел не из telegram.\nfunc - home; line - 62"), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("ошибка конвертации id, возможно пользователь зашел не из telegram."), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		return
 	}
-	//Если пользователь не является админом, высылаем ему заглушку.
+	//Если пользователь не является админом, высылаем ему заглушку
 	if !local_data_base.IsAdmin(&intId) {
 		app.render(w, "noAdmin.page.tmpl")
 		return
 	}
+	//Получаем список групп
 	groupList, err := local_data_base.GetGroupsList()
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("Ошибка получения списка групп.\nfunc - home; line - 73\n"+err.Error()), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("Ошибка получения списка групп: "+err.Error()), debug.Stack())
 		app.ErrorLog.Output(2, trace)
-		app.serverError(w, errors.New("Ошибка получения списка групп.\nfunc - home; line - 73\n"+err.Error()))
+		app.serverError(w, createError("Ошибка получения списка групп: "+err.Error()))
 	}
+	//Формируем массив из групп, которые принадлежат только пользователю
 	textSlice := []string{}
 	for _, v := range *groupList {
 		if v.Admin == intId {
@@ -86,18 +69,19 @@ func (app *Application) home(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+	//Формируем структур, чтобы передать ее в шаблон
 	data := Data{textSlice}
 	ts, ok := app.TemplateCache["home.page.tmpl"]
 	if !ok {
-		trace := fmt.Sprintf("%s\n%s", fmt.Errorf("шаблон %s не существует", "home.page.tmpl\nfunc - home; line - 87"), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("шаблон home.page.tmpl не существует"), debug.Stack())
 		app.ErrorLog.Output(2, trace)
-		app.serverError(w, fmt.Errorf("шаблон %s не существует", "home.page.tmpl"))
+		app.serverError(w, createError("шаблон home.page.tmpl не существует"))
 		return
 	}
-
+	//Выполнняем шаблон
 	err = ts.Execute(w, &data)
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("func - home; line - 97\n"+err.Error()), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("Не удалось выполнить выгрузку шаблона с ошибкой: "+err.Error()), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		app.serverError(w, err)
 	}
@@ -111,43 +95,83 @@ func (app *Application) new_group(w http.ResponseWriter, r *http.Request) {
 	app.render(w, "new_group.page.tmpl")
 }
 
+////////////////////////////////////////////////////////
+///                     ЗАПРОСЫ                      ///
+////////////////////////////////////////////////////////
+
+// Обработка аякс запросов. Проверяет данные и возвращает успешный код.
+func (app *Application) validate(w http.ResponseWriter, r *http.Request) {
+	// Проверка метода запроса
+	if r.Method != http.MethodPost {
+		trace := fmt.Sprintf("%s\n%s", createError("invalid request method"), debug.Stack())
+		app.ErrorLog.Output(2, trace)
+		http.Error(w, createError("Invalid request method").Error(), http.StatusMethodNotAllowed)
+		return
+	}
+	//Получаем тело запроса
+	err := r.ParseForm()
+	if err != nil {
+		trace := fmt.Sprintf("%s\n%s", createError("error parsing form data (body)"), debug.Stack())
+		app.ErrorLog.Output(2, trace)
+		http.Error(w, createError("Error parsing form data").Error(), http.StatusBadRequest)
+		return
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	///                  ДОБАВИТЬ ОБРАТОКУ ТОКЕНА                     ///
+	/////////////////////////////////////////////////////////////////////
+	//Парсим ключ из body
+	token := r.Form.Get("token")
+
+	// Ответ клиенту
+	w.WriteHeader(http.StatusOK)
+	app.InfoLog.Output(2, "На сайт успешно зашел пользователь. ")
+	fmt.Fprintf(w, "Token received successfully: %s", token)
+}
+
 // Обработка запросов на корректность имени группы.
 func (app *Application) checkGroupName(w http.ResponseWriter, r *http.Request) {
+	//Провекра типа запроса
 	if r.Method != http.MethodPost {
-		trace := fmt.Sprintf("%s\n%s", errors.New("func - checkGroupName; line - 113\nInvalid request method"), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("Получен неправильный тип запроса"), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
+	//Парсинг тела запроса
 	err := r.ParseForm()
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("func - checkGroupName; line - 119\nИмя использует запрещенные/некорректные символы"), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("Ошибка при парсинге тела запроса"), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		http.Error(w, "Имя использует запрещенные символы.", http.StatusBadRequest)
 		return
 	}
+	//Парсинг переменых из тела запроса
 	groupName := r.Form.Get("groupName")
 	id := r.Form.Get("id")
+	//Получение списка групп
 	groupList, err := local_data_base.GetGroupsList()
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("func - checkGroupName; line - 128\nОшибка при получении списка групп"+err.Error()), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("Ошибка при получении списка групп:"+err.Error()), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		w.WriteHeader(http.StatusBadGateway)
 		http.Error(w, "Неизвестная ошибка. Подождите или сообщите в тех. поддержку.", http.StatusBadRequest)
 		return
 	}
+	//Проверка предложенного имени на корректность (наличие недопустимых слов)
 	for _, v := range unacceptable_words {
 		if v == groupName {
-			trace := fmt.Sprintf("%s\n%s", errors.New("Имя группы: "+groupName+" - недопустимо"), debug.Stack())
+			trace := fmt.Sprintf("%s\n%s", createError("Имя группы: "+groupName+" - недопустимо"), debug.Stack())
 			app.ErrorLog.Output(2, trace)
 			w.WriteHeader(http.StatusBadGateway)
 			http.Error(w, "Неизвестная ошибка. Подождите или сообщите в тех. поддержку.", http.StatusBadRequest)
 			return
 		}
 	}
+	//Проверка предложенного имени на корректность (занятость имени группы)
 	for _, v := range *groupList {
 		if v.Name == groupName {
-			trace := fmt.Sprintf("%s\n%s", errors.New("Имя группы: "+groupName+" - занято"), debug.Stack())
+			trace := fmt.Sprintf("%s\n%s", createError("Имя группы: "+groupName+" - занято"), debug.Stack())
 			app.ErrorLog.Output(2, trace)
 			w.WriteHeader(http.StatusBadGateway)
 			http.Error(w, "Неизвестная ошибка. Подождите или сообщите в тех. поддержку.", http.StatusBadRequest)
@@ -157,41 +181,35 @@ func (app *Application) checkGroupName(w http.ResponseWriter, r *http.Request) {
 	// Конвертация строки в int64
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("Ошибка при конвертации id; func - checkGroupName; line - 158\n"+err.Error()), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("Ошибка при конвертации id: "+err.Error()), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		w.WriteHeader(http.StatusBadGateway)
 		fmt.Fprintf(w, "Ошибка при конвертации id")
 		return
 	}
+	//Создание предложенной группы в БД
 	err = local_data_base.CreateGroup(groupName, intId)
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("Ошибка при добавлении группы; func - checkGroupName; line - 166\n"+err.Error()), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("Ошибка при добавлении группы: "+err.Error()), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		w.WriteHeader(http.StatusBadGateway)
 		fmt.Fprintf(w, "Ошибка при добавлении группы")
 		return
 	}
-	////////////////////////////////////////////////////////////////////////////////
-	//////////////////////////       Создание расписания            ///////////////
-	//////////////////////////////////////////////////////////////////////////////
-	//Сейчас заглушка
+	//Создаем и заносим пустое расписание по-умолчанию.
 	tempEvenWeek := [][]string{}
 	tempOddWeek := [][]string{}
 	for i := 0; i < 7; i++ {
-		temp := []string{"Не заполнено"}
+		temp := []string{""}
 		tempEvenWeek = append(tempEvenWeek, temp)
 		tempOddWeek = append(tempOddWeek, temp)
 	}
-
-	////////////////////////////////////////////////////////////////////////////////
-	//Тут callback функция ) удачи
-	err = local_data_base.CreateSchedule(groupName, func() int {
-		todayDay := time.Now().Day()
-		if todayDay == 1 {
-			return 1
-		}
-		return todayDay - 1
-	}(), int(time.Now().Month()), tempEvenWeek, tempOddWeek)
+	/////////////////////////////////////////////////////////////////
+	///              ДОБАВИТЬ ДАТУ НАЧАЛА ОТСЧЕТА                 ///
+	/////////////////////////////////////////////////////////////////
+	//Сейчас тут старт у всех в 1 время 5.2
+	//Тут callback функция ) удачи/
+	err = local_data_base.CreateSchedule(groupName, 5, 2, tempEvenWeek, tempOddWeek)
 	if err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		fmt.Fprintf(w, "Ошибка при создании расписания")
@@ -204,11 +222,13 @@ func (app *Application) checkGroupName(w http.ResponseWriter, r *http.Request) {
 
 // Обработка запросов на создание группы.
 func (app *Application) creatingGroup(w http.ResponseWriter, r *http.Request) {
+	//Парсим id из URL
 	id := r.URL.Query().Get("id")
 
+	//Парсинг id из string в int64
 	intId, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
-		trace := fmt.Sprintf("%s\n%s", errors.New("Ошибка при чтении id; func - creatingGroup; line - 209\n"+err.Error()), debug.Stack())
+		trace := fmt.Sprintf("%s\n%s", createError("Ошибка при чтении id: "+err.Error()), debug.Stack())
 		app.ErrorLog.Output(2, trace)
 		http.Error(w, "Ошибка при чтении id.", http.StatusBadRequest)
 		return
@@ -216,6 +236,12 @@ func (app *Application) creatingGroup(w http.ResponseWriter, r *http.Request) {
 	////////////////////////////////////////////////////////////////////////////
 	////////////////            Зачем это тут?          ////////////////////////
 	////////////////////////////////////////////////////////////////////////////
+	if !local_data_base.IsAdmin(&intId) {
+		trace := fmt.Sprintf("%s\n%s", createError("Пользователь с id "+fmt.Sprint(intId)), debug.Stack())
+		app.ErrorLog.Output(2, trace)
+		http.Error(w, "Ошибка при чтении id.", http.StatusBadRequest)
+		return
+	}
 	app.InfoLog.Output(2, "Пользователь "+fmt.Sprint(intId)+" успешно подтвердил запрос на создание группы.")
 	app.render(w, "create.page.tmpl")
 }
