@@ -20,7 +20,10 @@ type Data struct {
 }
 
 // Недопустимые слова для названий групп
-var unacceptable_words = [...]string{"сегодня", "завтра", "все", "выбор группы", "меню админа", "/open", "/close", "/start"}
+var unacceptable_words = [...]string{
+	"сегодня", "завтра", "все", "выбор группы", "меню админа", "/open", "/close", "/start",
+	"Сегодня", "Завтра", "Все", "Выбор группы", "Меню админа", "/open", "/close", "/start",
+}
 
 func createError(str string) error {
 	pc, _, _, _ := runtime.Caller(1)
@@ -164,7 +167,7 @@ func (app *Application) checkGroupName(w http.ResponseWriter, r *http.Request) {
 			trace := fmt.Sprintf("%s\n%s", createError("Имя группы: "+groupName+" - недопустимо"), debug.Stack())
 			app.ErrorLog.Output(2, trace)
 			w.WriteHeader(http.StatusBadGateway)
-			http.Error(w, "Неизвестная ошибка. Подождите или сообщите в тех. поддержку.", http.StatusBadRequest)
+			http.Error(w, "Имя группы \""+groupName+"\" недопустимо\n", http.StatusBadRequest)
 			return
 		}
 	}
@@ -174,7 +177,7 @@ func (app *Application) checkGroupName(w http.ResponseWriter, r *http.Request) {
 			trace := fmt.Sprintf("%s\n%s", createError("Имя группы: "+groupName+" - занято"), debug.Stack())
 			app.ErrorLog.Output(2, trace)
 			w.WriteHeader(http.StatusBadGateway)
-			http.Error(w, "Неизвестная ошибка. Подождите или сообщите в тех. поддержку.", http.StatusBadRequest)
+			http.Error(w, "Имя группы \""+groupName+"\" занято", http.StatusBadRequest)
 			return
 		}
 	}

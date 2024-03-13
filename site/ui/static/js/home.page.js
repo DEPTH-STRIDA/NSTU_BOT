@@ -2,8 +2,15 @@
 ///              home_script               ///
 //////////////////////////////////////////////
 let tg = window.Telegram.WebApp
-
 function start() {
+
+   // Вставляем новый HTML-код внутрь контейнер
+   var containerElement = document.getElementById("page-contain");
+   containerElement.innerHTML = '<a class="data-card" id="noGroup">' +
+       '<h2>У вас нет ни одной группы.</h2>' +
+       '<button class="button-28" role="button" name="popup-button" onclick="button_action()">Создать группу</button>' +
+       '</a>';
+
     let intervalId = setInterval(function() {
         if (tg.initData && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
             var i = 0
@@ -16,9 +23,8 @@ function start() {
                 });
             });
             if (i === 0) {
+                // Вставляем новый HTML-код внутрь контейнер
                 var containerElement = document.getElementById("page-contain");
-
-                // Вставляем новый HTML-код внутрь контейнера
                 containerElement.innerHTML = '<a class="data-card" id="noGroup">' +
                     '<h2>У вас нет ни одной группы.</h2>' +
                     '<button class="button-28" role="button" name="popup-button" onclick="button_action()">Создать группу</button>' +
@@ -45,27 +51,6 @@ function start() {
         }
     }, 100)
 }
-// function initialization(type_) {
-//   var xhr = new XMLHttpRequest();
-//    var url = "/validate";
-//    var params = "token=" + type_;
-//    xhr.open("POST", url, true);
-//    xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-
-//  // Обработчик события onload для выполнения действий после успешного завершения запроса
-//   xhr.onload = function() {
-//        if (xhr.status == 200) {
-//            var response = xhr.responseText;
-//            console.log(response);
-//        } else { 
-//          var bodyElement = document.body;
-//          bodyElement.remove();
-//            console.error("AJAX request failed with status " + xhr.status);
-//        }
-//    };
-
-//    xhr.send(params);
-// }
 function chekData() {
     var xhr = new XMLHttpRequest();
     var url = "/validate";
@@ -84,6 +69,9 @@ function chekData() {
     };
 
     xhr.send(params);
+}
+function button_action(){
+  window.location.href = "/new-group"
 }
 
 function button_tg() {
@@ -139,10 +127,8 @@ function initialization(type_) {
 //////////////////////////////////////////////
 
 
-function test(name) {
-    //alert("Функция запущена " + name);
-  
-    // Создание формы
+  function test(name) {
+   // Создание формы
     var form = document.createElement('form');
     form.method = 'post';
     form.action = '/changeSchedule';

@@ -7,10 +7,10 @@ let groupName = "";
 function disableEnterKey(event) {
     if (event.key === "Enter") {
         event.preventDefault();
-        initialization();
+        setNewGroup();
     }
 }
-function initialization() {
+function setNewGroup() {
     var inputElement = document.getElementById("groupNameInput");
     var inputValue = inputElement.value;
     inputValue = inputValue.trim();
@@ -20,7 +20,11 @@ function initialization() {
 
     var xhr = new XMLHttpRequest();
     var url = "/checkGroupName";
-    var params = "groupName=" + encodeURIComponent(inputValue) + "&id=" + tg.initDataUnsafe.user.id;
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
+    var params = "groupName=" + encodeURIComponent(inputValue) + "&id=" + 1//tg.initDataUnsafe.user.id;
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     xhr.open("POST", url, true);
     xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 
@@ -384,8 +388,12 @@ function editShedule() {
         alert("Неизвестная ошибка.")
         return
     }
-    //alert(encodeURIComponent(schedule_json))
-    var params = "schedule=" + encodeURIComponent(schedule_json)+"&id="+tg.initDataUnsafe.user.id+"&groupName="+groupName//tg.initDataUnsafe.user.id;
+   ////////////////////////////////////////////////////////////////////////////
+   ////////////////////////////////////////////////////////////////////////////
+    var params = "schedule=" + encodeURIComponent(schedule_json)+"&id="+1+"&groupName="+groupName
+    //tg.initDataUnsafe.user.id+"&groupName="+groupName
+    ////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////
     xhr.open("POST", url, true);
     xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
     // Обработчик события onload для выполнения действий после успешного завершения запроса

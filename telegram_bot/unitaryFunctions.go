@@ -89,17 +89,15 @@ func weekdayByIndex(n int) string {
 }
 
 // Функция, которая возвращает расписание на этот день
-func getSchedule(dayType string, fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) (string, error) {
+func getSchedule(skipDay int, fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) (string, error) {
 	//Получае расписание, если пользователь есть в БД
 	schedules, err := db.GetSchedule(&fromUserMsg.Chat.ID)
 	if err != nil {
 		return "К сожалению вас нет в базе данных. Обратитесь в поддержку.", err
 	}
 	date := time.Now()
-	//Если нужно расписание на завтра, то прибавляем день.
-	if dayType == "завтра" {
-		date = date.AddDate(0, 0, 1)
-	}
+	date = date.AddDate(0, 0, skipDay)
+
 	day := date.Day()
 	month := int(date.Month())
 	dayWeek := int(date.Weekday())
@@ -113,7 +111,7 @@ func getSchedule(dayType string, fromUserMsg *tgbotapi.Message, toUserMsg *tgbot
 	toUserMsg.ParseMode = "HTML"
 	for _, v := range schedules.EvenWeekDate {
 		if v[0] == day && v[1] == month {
-			toReturn = moonEmoji + "<b>Четная неделя</b>\n"
+			toReturn = sunEmoji + "<b>Четная неделя</b>\n"
 			fond = true
 			schedule = schedules.EvenWeekSchedule[dayWeek-1]
 		}
@@ -130,8 +128,7 @@ func getSchedule(dayType string, fromUserMsg *tgbotapi.Message, toUserMsg *tgbot
 	if !fond {
 		return "Для вашей группы не составлено расписание четных, нечетных недель", errors.New("расписание не найдено в БД. Необходимо составить расписание четных нечетных недель")
 	}
-	//Дата запроса
-	toReturn += clockEmoji + " " + time.Now().Format("02.01") + "\n"
+	toReturn += clockEmoji + " " + date.Format("02.01") + "\n"
 	toReturn += dayEmoji + " <b>" + weekdayByName(date.Weekday()) + "</b>\n\n"
 	fmt.Println("today ", int(date.Weekday()))
 	isEmpty := true

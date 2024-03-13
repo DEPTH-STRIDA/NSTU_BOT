@@ -35,13 +35,13 @@ func text(fromUserMsg *tgbotapi.Message, toUserMsg *tgbotapi.MessageConfig) {
 	//Переводим все буквы в нижний регистр.
 	switch strings.ToLower(fromUserMsg.Text) {
 	case "сегодня":
-		toUserMsg.Text, err = getSchedule("сегодня", fromUserMsg, toUserMsg)
+		toUserMsg.Text, err = getSchedule(0, fromUserMsg, toUserMsg)
 
 		if err != nil {
 			fmt.Println(err.Error())
 		}
 	case "завтра":
-		toUserMsg.Text, err = getSchedule("завтра", fromUserMsg, toUserMsg)
+		toUserMsg.Text, err = getSchedule(1, fromUserMsg, toUserMsg)
 		if err != nil {
 			fmt.Println(err.Error())
 		}

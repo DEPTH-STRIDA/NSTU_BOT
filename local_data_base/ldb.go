@@ -74,12 +74,10 @@ func CreateGroup(groupName string, chatId int64) error {
 			return errors.New("такое имя группы уже занято")
 		}
 	}
-	fmt.Println(groupList)
 	groupList = append(groupList, GroupList{
 		Name:  groupName,
 		Admin: chatId,
 	})
-	fmt.Println(groupList)
 	jsonData, err := json.MarshalIndent(groupList, "", "    ")
 	if err != nil {
 		return err
@@ -216,10 +214,6 @@ func GetSchedule(chatId *int64) (*Schedule, error) {
 
 // Функция создает группу (просчитывает четные-нечетные недели)
 func CreateSchedule(groupname string, day, month int, EvenWeekSchedule [][]string, OddWeekSchedule [][]string) error {
-	//Уменьшаем индекс дня
-	if day != 1 {
-		day -= 1
-	}
 	//Получем список групп
 	groupList, err := GetGroupsList()
 	if err != nil {
